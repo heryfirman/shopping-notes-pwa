@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import Wellcome from './pages/Wellcome'
+import Notes from './pages/Notes'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ const Content = () => {
     >
       <Routes location={displayLocation}>
         <Route path='/' element={<Wellcome />} />
+        <Route path='/notes' element={<Notes />} />
       </Routes>
     </div>
   )
