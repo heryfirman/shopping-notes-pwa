@@ -29,7 +29,7 @@ function Wellcome({}: Props) {
 
           <div className="mt-5">
             <Link
-              to="/tasks"
+              to="/notes"
               className="w-fit flex gap-2 rounded-full bg-yellow-200 text-black"
             >
               <span className="my-auto inline-block pl-5 pr-3">

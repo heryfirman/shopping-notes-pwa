@@ -17,7 +17,10 @@ app.get('/notes', async (req: Request, res: Response) => {
 
 app.post('/note/create', async (req: Request, res: Response): Promise<void> => {
     const body = req.body.body;
-    const priority = req.body.priority;
+    // const priority = +req.body.priority;
+    // become to convert number from string default value
+    // or convert into an integer method
+    const priority = parseInt(req.body.priority); 
 
     if (!body || !priority) {
         res.status(400).send({

@@ -40,7 +40,7 @@ const Notes = () => {
           <button className="flex p-2 px-3 rounded-full text-white bg-gray-800">Done</button>
         </div>
         <Link
-          to='/create'
+          to='/note/create'
           className="flex h-fit my-auto ml-auto p-2 rounded-full text-black bg-yellow-200">
             <IoAdd className="text-2xl" />
         </Link>

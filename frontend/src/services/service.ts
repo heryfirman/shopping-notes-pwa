@@ -14,6 +14,16 @@ export const fetchNotes = async () => {
     }
 };
 
+export const createNote = async (payload: {body: string, priority: number}) => {
+    try {
+        const response = await axios.post('/note/create', payload);
+        return response.data;
+    } catch (error) {
+        console.log("Error service/createNote", error);
+        throw error;
+    }
+};
+
 export const editNote = async (id: number, completed: boolean) => {
  try {
     const response = await axios.patch('/note/edit/' + id, {
