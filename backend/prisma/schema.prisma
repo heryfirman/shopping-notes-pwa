@@ -19,3 +19,23 @@ model Notes {
   completed Boolean
   priority  Int
 }
+
+model Category {
+  id        String  @id @default(uuid())
+  name      String  @unique
+  unit      String
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  price       Float
+  unit        String
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
