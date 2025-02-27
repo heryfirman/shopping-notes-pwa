@@ -35,3 +35,39 @@ export const editNote = async (id: number, completed: boolean) => {
     throw error;
  }
 };
+
+
+export const fetchProducts = async () => {
+    try {
+        const response = await axios.get('/products');
+        return response.data;
+    } catch (error) {
+        console.log("Error service/fetchProducts: ", error);
+        throw error;
+    }
+};
+
+export const createProduct = async (payload: {name: string, price: number, unit: string, categoryId: string}) => {
+    try {
+        const response = await axios.post('/product/create', payload);
+        return response.data;
+    } catch (error) {
+        console.log("Error service/createNote", error);
+        throw error;
+    }
+};
+
+export const editProduct = async (id: string, name: string, price: number, unit: string, categoryId: string) => {
+    try {
+        const response = await axios.patch('/product/edit' + id, {
+            name,
+            price,
+            unit,
+            categoryId
+        });
+        return response.data;
+    } catch (error) {
+        console.log("Error service/editProduct", error);
+        throw error;
+    }
+}

@@ -22,17 +22,6 @@ const Create = () => {
     })
   }
 
-  // handle form 
-  // reset prevent
-  // try catch
-  // if !body & !priority return
-  // else createNotes & reset form
-  // show toast notify success
-  
-  // catch :
-  // if !navigator.onLine reset form
-  // return toast notyf succeess
-  // else show notyf error
   const handleForm = async (e: FormEvent) => {
     e.preventDefault()
     try {
