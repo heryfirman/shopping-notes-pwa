@@ -47,6 +47,16 @@ export const fetchProducts = async () => {
     }
 };
 
+export const fetchCategory = async () => {
+    try {
+        const response = await axios.get('/category');
+        return response.data;
+    } catch (error) {
+        console.log("Error service/fetchCategory: ", error);
+        throw error;
+    }
+};
+
 export const createProduct = async (payload: {name: string, price: number, unit: string, categoryId: string}) => {
     try {
         const response = await axios.post('/product/create', payload);

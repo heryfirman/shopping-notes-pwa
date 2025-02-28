@@ -1,9 +1,9 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Layout from "../components/layout/Layout";
 import { IoArrowBack } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { createProduct } from "../services/service";
+import { createProduct, fetchCategory } from "../services/service";
 
 const CreateProduct = () => {
   const [product, setProduct] = useState({
@@ -13,7 +13,21 @@ const CreateProduct = () => {
     categoryId: "",
   });
 
+  const [categories, setCategories] = useState<{ id: string; name: string; unit: string }[]>([]);
   const styleClassName = 'w-full p-3 rounded-xl border border-solid border-gray-400';
+
+
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategory();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories: ", error);
+      }
+    }
+    getCategories();
+  }, []);
 
   const resetForm = () => {
     setProduct({
@@ -42,7 +56,7 @@ const CreateProduct = () => {
     }
   }
 
-  const handlechange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handlechange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProduct((prevProduct) => ({
       ...prevProduct,
@@ -95,14 +109,19 @@ const CreateProduct = () => {
         </div>
 
         <div>
-          <input
-            type="text"
+          <select 
             name="categoryId"
             value={product.categoryId}
             onChange={handlechange}
-            placeholder="category"
-            className={styleClassName}
-          />
+            className={`${styleClassName} text-white bg-gray-700`}
+          >
+            <option value="">Select a category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name} ({category.unit})
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="mx-auto">
