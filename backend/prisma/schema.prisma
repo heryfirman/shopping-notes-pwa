@@ -20,22 +20,46 @@ model Notes {
   priority  Int
 }
 
+model Unit {
+  id            String @id @default(uuid())
+  name          String @unique
+  categories    CategoryUnit[]
+  productUnits  ProductUnit[]
+}
+
 model Category {
-  id        String  @id @default(uuid())
-  name      String  @unique
-  unit      String
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String  @id @default(uuid())
+  name          String  @unique
+  units         CategoryUnit[]
+  products      Product[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Product {
-  id          String  @id @default(uuid())
-  name        String
-  price       Float
-  unit        String
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String  @id @default(uuid())
+  name          String
+  price         Float
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  productUnits  ProductUnit[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ProductUnit {
+  productId     String
+  unitId        String
+  product       Product @relation(fields: [productId], references: [id])
+  unit          Unit    @relation(fields: [unitId], references: [id])
+
+  @@id([productId, unitId])
+}
+
+model CategoryUnit {
+  categoryId    String
+  unitId        String
+  category      Category @relation(fields: [categoryId], references: [id])
+  unit          Unit     @relation(fields: [unitId], references: [id])
+  @@id([categoryId, unitId])
 }

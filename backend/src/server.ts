@@ -68,17 +68,63 @@ app.get('/category', async (req: Request, res: Response) => {
     res.json(categories);
 });
 
-app.post('/category/create', async (req: Request, res: Response): Promise<void> => {
-    const { name, unit } = req.body;
+app.get('/categories', async (req: Request, res: Response) => {
+    try {
+        const categories = await prisma.category.findMany({
+            include: { units: { include: { unit: true } } }, // Include related units
+        });
+        res.json(categories);
+    } catch (error) {
+        res.status(500).send({ error: "Error fetching categories", details: error });
+    }
+})
 
-    if (!name || !unit) {
-        res.status(400).send({ error: "Category name is required! " })
+app.get("/units", async (req: Request, res: Response) => {
+    try {
+      const units = await prisma.unit.findMany();
+      res.json(units);
+    } catch (error) {
+      res.status(500).send({ error: "Error fetching units", details: error });
+    }
+});
+
+app.post("/unit/create", async (req: Request, res: Response) => {
+    const { name } = req.body;
+
+    if (!name) {
+        res.status(400).send({ error: "Unit name is required!" });
+        return;
+    };
+
+    try {
+      const units = await prisma.unit.create({
+        data: { name }
+      });
+      res.json(units);
+    } catch (error) {
+      res.status(500).send({ error: "Error fetching units", details: error });
+    }
+});
+  
+app.post('/category/create', async (req: Request, res: Response): Promise<void> => {
+    const { name, units } = req.body;
+
+    if (!name || !Array.isArray(units) || units.length === 0) {
+        res.status(400).send({ error: "Category name and least one unit are is required! " })
         return;
     }
 
     try {
         const newCategory = await prisma.category.create({
-            data: { name, unit },
+            data: { 
+                name,
+                units: {
+                    create: units.map((unitId: string) => ({
+                        unit: { connect: { id: unitId } },
+                    })),
+                },
+            },
+            include: { units: { include: { unit: true } } },
         });
         res.status(201).send(newCategory);
     } catch (error) {
@@ -88,17 +134,26 @@ app.post('/category/create', async (req: Request, res: Response): Promise<void> 
 
 app.patch('/category/edit/:id', async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
-    const { name, unit } = req.body;
+    const { name, units } = req.body;
 
-    if (!name || !unit) {
-        res.status(400).send({ error: "Category not avaiable!" })
+    if (!name || !Array.isArray(units) || units.length === 0) {
+        res.status(400).send({ error: "Category name and least one unit are is required! " })
         return;
     }
 
     try {
         const result = await prisma.category.update({
             where: { id },
-            data: { name, unit },
+            data: { 
+                name, 
+                units: {
+                    deleteMany: {}, // Remove previous units
+                    create: units.map((unitId: string) => ({
+                        unit: { connect: { id: unitId } },
+                    })),
+                },
+            },
+            include: { units: { include: { unit: true } } },
         });
     
         res.send(result);
@@ -112,37 +167,68 @@ app.get('/products', async (req: Request, res: Response) => {
     res.json(products);
 });
 
+
 app.post("/product/create", async (req: Request, res: Response): Promise<void> => {
-    const { name, price, unit, categoryId } = req.body;
-
-    if (!name || !price || !unit || !categoryId) {
-        res.status(400).send({
-            error: "Nama, harga, unit, dan ID kategori diperlukan!",
-        });
-        return;
+    const { name, price, units, categoryId } = req.body;
+  
+    if (!name || !price || !Array.isArray(units) || units.length === 0 || !categoryId) {
+      res.status(400).send({ error: "All fields are required!" });
+      return;
     }
-
+  
     try {
-        const newProduct = await prisma.product.create({
-            data: {
-                name,
-                price: parseFloat(price),
-                unit,
-                categoryId,
-            },
-        });
-
-        res.status(201).send(newProduct);
+      const newProduct = await prisma.product.create({
+        data: {
+          name,
+          price: parseFloat(price),
+          categoryId,
+          productUnits: {
+            create: units.map((unitId: string) => ({
+              unit: { connect: { id: unitId } },
+            })),
+          },
+        },
+        include: { productUnits: { include: { unit: true } } }, // Fetch related units
+      });
+  
+      res.status(201).send(newProduct);
     } catch (error) {
-        res.status(500).send({ error: "Terjadi kesalahan saat membuat produk.", details: error });
+      res.status(500).send({ error: "Error creating product", details: error });
     }
 });
+  
+
+// app.post("/product/create", async (req: Request, res: Response): Promise<void> => {
+//     const { name, price, unit, categoryId } = req.body;
+
+//     if (!name || !price || !unit || !categoryId) {
+//         res.status(400).send({
+//             error: "Nama, harga, unit, dan ID kategori diperlukan!",
+//         });
+//         return;
+//     }
+
+//     try {
+//         const newProduct = await prisma.product.create({
+//             data: {
+//                 name,
+//                 price: parseFloat(price),
+//                 unit,
+//                 categoryId,
+//             },
+//         });
+
+//         res.status(201).send(newProduct);
+//     } catch (error) {
+//         res.status(500).send({ error: "Terjadi kesalahan saat membuat produk.", details: error });
+//     }
+// });
 
 app.patch('/product/edit/:id', async (req: Request, res: Response): Promise<void> => {
     const id: string = req.params.id;
-    const { name, price, unit, categoryId } = req.body;
+    const { name, price, units, categoryId } = req.body;
 
-    if (!name || !price || !unit || !categoryId) {
+    if (!name || !price || !Array.isArray(units) || units.length === 0 || !categoryId) {
         res.status(400).send({ error: "product not avaiable!" })
         return;
     }
@@ -157,7 +243,17 @@ app.patch('/product/edit/:id', async (req: Request, res: Response): Promise<void
     try {
         const result = await prisma.product.update({
             where: { id },
-            data: { name, price, unit },
+            data: { 
+                name, 
+                price: parseFloat(price),
+                productUnits: {
+                    deleteMany: {}, // Remove previous units
+                    create: units.map((unitId: string) => ({
+                        unit: { connect: { id: unitId } },
+                    })),
+                },
+            },
+            include: { productUnits: { include: { unit: true } } },
         });
     
         res.send(result);
