@@ -3,20 +3,81 @@ import Layout from "../components/layout/Layout";
 import { IoArrowBack } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { createProduct, fetchCategory } from "../services/service";
+import { createProduct, fetchCategory, fetchUnits } from "../services/service";
 
 const CreateProduct = () => {
   const [product, setProduct] = useState({
     name: "",
     price: 0,
-    unit: "",
+    units: [] as string[],
     categoryId: "",
   });
 
-  const [categories, setCategories] = useState<{ id: string; name: string; unit: string }[]>([]);
+  // const [categories, setCategories] = useState<{ id: string; name: string; unit: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string, units: string[]}[]>([]);
+  const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
+  
   const styleClassName = 'w-full p-3 rounded-xl border border-solid border-gray-400';
 
 
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const [categoriesData, unitsData] = await Promise.all([fetchCategory(), fetchUnits()]);
+        setCategories(categoriesData);
+        setUnits(unitsData);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+    };
+    getData();
+  }, []);
+
+
+  const resetForm = async () => {
+    setProduct({
+      name: "",
+      price: 0,
+      units: [],
+      categoryId: "",
+    });
+  };
+
+  const handleForm = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!product.name || product.price <= 0 || product.units.length === 0 || !product.categoryId) {
+        toast.error("Please fill in all fields correctcly!");
+        return;
+      }
+      await createProduct(product);
+      toast.success("Product created!");
+    } catch (error) {
+      if (!navigator.onLine) {
+        resetForm();
+        return toast.success("You're offline. Save change when you're online!");
+      }
+      toast.error("Error creating product");
+    }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === "units") {
+      setProduct((prev) => ({
+        ...prev,
+        units: Array.from(new Set([...prev.units, value])), // Ensure unique unit selection
+      }));
+    } else {
+      setProduct((prev) => ({
+        ...prev,
+        [name]: name === "price" ? Number(value) : value,
+      }));
+    }
+  };
+
+/*
   useEffect(() => {
     const getCategories = async () => {
       try {
@@ -63,7 +124,7 @@ const CreateProduct = () => {
       [name]: name === "price" ? Number(value) : value,
     }));
   }
-
+*/
   console.log(product);
 
   return (
@@ -82,7 +143,7 @@ const CreateProduct = () => {
             name="name"
             value={product.name}
             placeholder="Nama Produk"
-            onChange={handlechange}
+            onChange={handleChange}
             className={styleClassName}
           />
         </div>
@@ -92,33 +153,69 @@ const CreateProduct = () => {
             type="number"
             name="price"
             value={product.price}
-            onChange={handlechange}
+            onChange={handleChange}
             className={styleClassName}
           />
         </div>
 
-        <div>
+        {/* <div>
           <input
             type="text"
             name="unit"
-            value={product.unit}
-            onChange={handlechange}
+            value={product.units['name']}
+            onChange={handleChange}
             placeholder="Unit"
             className={styleClassName}
           />
+        </div> */}
+
+        <div>
+          {product.units.map((unitId) => {
+            const unit = units.find((u) => u.id === unitId);
+            return (
+              <input
+                key={unitId}
+                type="text"
+                value={unit ? unit.name : ""}
+                readOnly
+                className={styleClassName}
+                placeholder="Unit"
+              />
+            );
+          })}
         </div>
 
         <div>
           <select 
             name="categoryId"
             value={product.categoryId}
-            onChange={handlechange}
+            onChange={handleChange}
             className={`${styleClassName} text-white bg-gray-700`}
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name} ({category.unit})
+                {category.name} ({ category.units?.length }  units)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block mb-1">Select Units</label>
+          <select
+            name="units"
+            multiple
+            value={product.units}
+            // onChange={handleChange}
+            onChange={(e) => 
+              setProduct({ ...product, units: Array.from(e.target.selectedOptions, (option) => option.value) })
+            }
+            className={`${styleClassName} text-white bg-gray-700`}
+          >
+            {units.map((unit) => (
+              <option key={unit.id} value={unit.id}>
+                {unit.name}
               </option>
             ))}
           </select>

@@ -162,16 +162,35 @@ app.patch('/category/edit/:id', async (req: Request, res: Response): Promise<voi
     }
 });
 
+// app.get('/products', async (req: Request, res: Response) => {
+//     const products = await prisma.product.findMany();
+//     res.json(products);
+// });
+
 app.get('/products', async (req: Request, res: Response) => {
-    const products = await prisma.product.findMany();
-    res.json(products);
-});
+    try {
+        const products = await prisma.product.findMany({
+            include: {
+                productUnits: {  // Include the many-to-many relation
+                    include: {
+                        unit: true, // Fetch actual unit details
+                    },
+                },
+                category: true, // Include category details
+            },
+        });
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching products", details: error });
+    }
+})
 
 
 app.post("/product/create", async (req: Request, res: Response): Promise<void> => {
     const { name, price, units, categoryId } = req.body;
   
-    if (!name || !price || !Array.isArray(units) || units.length === 0 || !categoryId) {
+    if (!name || price <= 0 || !Array.isArray(units) || units.length === 0 || !categoryId) {
+    // if (!name || !price || !Array.isArray(units) || units.length === 0 || !categoryId) {
       res.status(400).send({ error: "All fields are required!" });
       return;
     }

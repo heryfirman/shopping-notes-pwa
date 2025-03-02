@@ -57,7 +57,18 @@ export const fetchCategory = async () => {
     }
 };
 
-export const createProduct = async (payload: {name: string, price: number, unit: string, categoryId: string}) => {
+export const fetchCategories = async () => {
+    const response = await axios.get('/categories');
+    return response.data;
+};
+
+export const fetchUnits = async () => {
+    const response = await axios.get('/units');
+    return response.data;
+};
+
+export const createProduct = async (payload: {name: string, price: number, units: string[], categoryId: string}) => {
+// export const createProduct = async (payload: {name: string, price: number, unit: string, categoryId: string}) => {
     try {
         const response = await axios.post('/product/create', payload);
         return response.data;
