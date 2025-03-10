@@ -24,6 +24,9 @@ const CreateProduct = () => {
     const getData = async () => {
       try {
         const [categoriesData, unitsData] = await Promise.all([fetchCategory(), fetchUnits()]);
+        console.log("Fetched categories: ", categoriesData); // DEBUG
+        console.log("Fetched units: ", unitsData); // DEBUG
+        
         setCategories(categoriesData);
         setUnits(unitsData);
       } catch (error) {
@@ -45,6 +48,8 @@ const CreateProduct = () => {
 
   const handleForm = async (e: FormEvent) => {
     e.preventDefault();
+    console.log("Submitting product: ", product); //DEBUG
+
     try {
       if (!product.name || product.price <= 0 || product.units.length === 0 || !product.categoryId) {
         toast.error("Please fill in all fields correctcly!");
@@ -53,12 +58,14 @@ const CreateProduct = () => {
       await createProduct(product);
       toast.success("Product created!");
     } catch (error) {
+      console.error("Error creating product: ", error); // DEBUG
       if (!navigator.onLine) {
         resetForm();
         return toast.success("You're offline. Save change when you're online!");
       }
       toast.error("Error creating product");
     }
+    resetForm();
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -195,13 +202,14 @@ const CreateProduct = () => {
             <option value="">Select a category</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name} ({ category.units?.length }  units)
+                {category.name}
+                {/* {category.name} ({ category.units?.length }  units) */}
               </option>
             ))}
           </select>
         </div>
 
-        <div>
+        {/* <div>
           <label className="block mb-1">Select Units</label>
           <select
             name="units"
@@ -219,6 +227,37 @@ const CreateProduct = () => {
               </option>
             ))}
           </select>
+        </div> */}
+
+        <div>
+          <h3 className="mb-4 font-semibold text-gray-200 dark:text-white">Select Units</h3>
+          <ul className="w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            {units.map((unit) => (
+              <li key={unit.id} className="w-full border-b border-gray-200 rounded-t-lg dark:border-gray-600">
+                  <div className="flex items-center ps-3">
+                      <input id={`unit-${unit.id}`} 
+                        type="checkbox" 
+                        value={unit.id} 
+                        onChange={(e) => {
+                          const checked = e.target.checked; 
+                          setProduct((prev) => {
+                            const newUnits = checked
+                              ? [...prev.units, unit.id] // add unit if checked
+                              : prev.units.filter((id) => id !== unit.id); // deleted unit if not checked 
+                              console.log("Updated units: ", newUnits);
+                              
+                              return { ...prev, units: newUnits };
+                            });
+                        }}
+                        checked={product.units.includes(unit.id)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                      />
+                      <label htmlFor={`unit-${unit.id}`} className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{unit.name}</label>
+                  </div>
+              </li>
+            ))}
+              
+          </ul>
         </div>
 
         <div className="mx-auto">

@@ -72,8 +72,9 @@ export const createProduct = async (payload: {name: string, price: number, units
     try {
         const response = await axios.post('/product/create', payload);
         return response.data;
-    } catch (error) {
-        console.log("Error service/createNote", error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        console.log("Error service/createNote", error.response.data ||  error.message);
         throw error;
     }
 };

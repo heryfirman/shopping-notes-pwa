@@ -187,19 +187,54 @@ app.get('/products', async (req: Request, res: Response) => {
 
 
 app.post("/product/create", async (req: Request, res: Response): Promise<void> => {
-    const { name, price, units, categoryId } = req.body;
-  
-    if (!name || price <= 0 || !Array.isArray(units) || units.length === 0 || !categoryId) {
-    // if (!name || !price || !Array.isArray(units) || units.length === 0 || !categoryId) {
-      res.status(400).send({ error: "All fields are required!" });
-      return;
-    }
-  
     try {
-      const newProduct = await prisma.product.create({
+
+        console.log("Received request body: ", req.body); // DEBUG:
+
+        const { name, price, units, categoryId } = req.body;
+  
+        if (!name || price <= 0 || !Array.isArray(units) || units.length === 0 || !categoryId) {
+          res.status(400).send({ error: "All fields are required!" });
+          return;
+        }
+
+        // Validate input
+        if (!name || !categoryId || !Array.isArray(units) || units.length === 0) {
+            res.status(400).json({ error: "All fields are required!" });
+        }
+
+        const parsedPrice = parseFloat(price);
+        if (isNaN(parsedPrice) || parsedPrice <= 0) {
+            res.status(400).json({ error: "Invalid price value" });
+        }
+
+        // Ensure category exists
+        const category = await prisma.category.findUnique({
+            where: {
+                id: categoryId,
+            }
+        });
+        if (!category) {
+            res.status(404).json({ error: "Category not found" });
+        }
+
+        // Ensure all units exist
+        const existingUnits = await prisma.unit.findMany({
+            where: {
+                id: {
+                    in: units
+                }
+            }
+        });
+        if(existingUnits.length !== units.length) {
+            res.status(400).json({ error: "One or more unit IDs are invalid" });
+        }
+        
+        const newProduct = await prisma.product.create({
         data: {
           name,
-          price: parseFloat(price),
+          price: parsedPrice,
+        //   price: parseFloat(price),
           categoryId,
           productUnits: {
             create: units.map((unitId: string) => ({
